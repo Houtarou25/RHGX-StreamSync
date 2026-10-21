@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoutarouBot OBS Overlay</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;800&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: transparent;
+            margin: 0;
+            padding: 16px;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: #f1f5f9;
+        }
+
+        .font-mono {
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* Top Corner Status Indicator */
+        .status-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(10, 10, 10, 0.85);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .status-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ef4444; /* Red: Disconnected */
+            box-shadow: 0 0 10px #ef4444;
+            transition: all 0.3s ease;
+        }
+
+        .status-light.connected {
+            background-color: #10b981; /* Green: Connected */
+            box-shadow: 0 0 12px #10b981;
+        }
+
+        .status-text {
+            color: #cbd5e1;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        /* Alerts Container */
+        #alertsContainer {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            width: 440px;
+            max-width: 90vw;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Alert Card Base */
+        .alert-card {
+            background: rgba(10, 10, 10, 0.94);
+            border-left: 4px solid #dc2626;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            padding: 14px 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(220, 38, 38, 0.2);
+            backdrop-filter: blur(12px);
+            transform: translateX(-120%);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+
+        .alert-card.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .alert-card.fade-out {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+
+        /* Alert Variants */
+        .alert-card.ai-reply {
+            border-left-color: #dc2626;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 20px rgba(220, 38, 38, 0.25);
+        }
+
+        .alert-card.gamble-win {
+            border-left-color: #10b981;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 20px rgba(16, 185, 129, 0.25);
+        }
+
+        .alert-card.gamble-loss {
+            border-left-color: #64748b;
+        }
+
+        .alert-card.heist-start {
+            border-left-color: #f59e0b;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .alert-card.heist-win {
+            border-left-color: #10b981;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .alert-card.action-redeem {
+            border-left-color: #06b6d4;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 25px rgba(6, 182, 212, 0.4);
+        }
+
+        .alert-card.donation-alert {
+            border-left-color: #f59e0b;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.9), 0 0 30px rgba(245, 158, 11, 0.45);
+        }
+
+        .alert-badge.gold {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.5);
+        }
+
+        .alert-badge.cyan {
+            background: rgba(6, 182, 212, 0.15);
+            color: #06b6d4;
+            border-color: rgba(6, 182, 212, 0.4);
+        }
+
+        .alert-card.heist-bust {
+            border-left-color: #ef4444;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 25px rgba(239, 68, 68, 0.4);
+        }
+
+        .alert-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .alert-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 2px 8px;
+            border-radius: 2px;
+            background: rgba(220, 38, 38, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(220, 38, 38, 0.4);
+        }
+
+        .alert-badge.green {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .alert-badge.amber {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
+        .alert-target {
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .alert-body {
+            font-size: 13px;
+            line-height: 1.45;
+            color: #f8fafc;
+            word-break: break-word;
+        }
+
+        .alert-footer {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .countdown-bar-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .countdown-bar {
+            height: 100%;
+            width: 100%;
+            background: #f59e0b;
+            transform-origin: left;
+            animation: shrink linear forwards;
+        }
+
+        @keyframes shrink {
+            from { transform: scaleX(1); }
+            to { transform: scaleX(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Connection Status Badge -->
+    <div class="status-container" id="statusContainer">
+        <div class="status-light" id="light"></div>
+        <span class="status-text font-mono" id="status-label">Node Bot Offline</span>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertsContainer"></div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Deployment-ready WebSocket URL (handles HTTPS/WSS, custom ports, and domains)
+        const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const defaultHost = window.location.host || '127.0.0.1:8081';
+        let wsUrl = urlParams.get('ws');
+
+        if (!wsUrl) {
+            wsUrl = `${wsProto}//${defaultHost}`;
+        } else if (!wsUrl.startsWith('ws://') && !wsUrl.startsWith('wss://')) {
+            wsUrl = `${wsProto}//${wsUrl}`;
+        }
+
+        // Hide badge if ?hideBadge=1
+        if (urlParams.get('hideBadge') === '1' || urlParams.get('nobadge') === '1') {
+            document.getElementById('statusContainer').style.display = 'none';
+        }
+
+        const light = document.getElementById('light');
+        const label = document.getElementById('status-label');
+        const container = document.getElementById('alertsContainer');
+
+        let ws = null;
+
+        function connect() {
+            try {
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    light.classList.add('connected');
+                    label.innerText = 'Bot Uplink Online';
+                    console.log('✅ Connected to HoutarouBot OBS WebSocket:', wsUrl);
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const payload = JSON.parse(event.data);
+                        handleIncomingAlert(payload);
+                    } catch (e) {
+                        console.error('Error parsing overlay message:', e);
+                    }
+                };
+
+                ws.onclose = () => {
+                    light.classList.remove('connected');
+                    label.innerText = 'Bot Uplink Offline';
+                    setTimeout(connect, 3000);
+                };
+
+                ws.onerror = () => {
+                    ws.close();
+                };
+            } catch (err) {
+                setTimeout(connect, 3000);
+            }
+        }
+
+        function handleIncomingAlert(payload) {
+            const { type, data } = payload;
+
+            if (type === 'ai_reply') {
+                showAiAlert(data.username, data.reply, data.persona, data.platform);
+            } else if (type === 'gamble') {
+                showGambleAlert(data.username, data.won, data.amount, data.balance, data.roll);
+            } else if (type === 'heist_start') {
+                showHeistStartAlert(data.leader, data.countdown);
+            } else if (type === 'heist_result') {
+                showHeistResultAlert(data.success, data.crew);
+            } else if (type === 'redemption') {
+                showRedeemAlert(data.username, data.action, data.cost, data.platform, data.balance);
+            } else if (type === 'donation') {
+                showDonationAlert(data.donor, data.amount, data.currency, data.message, data.bonusPoints);
+            }
+        }
+
+        function showDonationAlert(donor, amount, currency, message, bonusPoints) {
+            const html = `
+                <div class="alert-header">
+                    <span class="alert-badge gold font-mono"><i class="fa-solid fa-heart" style="color: #ec4899;"></i> KO-FI DONATION</span>
+                    <span class="alert-target font-mono" style="color: #f59e0b; font-weight: 800; font-size: 13px;">${currency} ${amount}</span>
+                </div>
+                <div class="alert-body font-mono">
+                    <strong>@${escapeHtml(donor)}</strong> bought a coffee!
+                    ${message ? `<div style="margin-top: 6px; font-style: italic; color: #f8fafc; background: rgba(0,0,0,0.4); padding: 4px 8px; border-left: 2px solid #f59e0b;">"${escapeHtml(message)}"</div>` : ''}
+                </div>
+                ${bonusPoints ? `<div class="alert-footer font-mono" style="color: #10b981; font-weight: 700;">+${bonusPoints} Loyalty Points Awarded!</div>` : ''}
+            `;
+            createAlertElement('donation-alert', html, 9000);
+        }
+
+        function createAlertElement(cardClass, innerHtml, durationMs = 6000) {
+            const card = document.createElement('div');
+            card.className = `alert-card ${cardClass}`;
+            card.innerHTML = innerHtml;
+            container.appendChild(card);
+
+            // Trigger slide-in
+            requestAnimationFrame(() => card.classList.add('show'));
+
+            // Auto dismiss
+            setTimeout(() => {
+                card.classList.remove('show');
+                card.classList.add('fade-out');
+                setTimeout(() => card.remove(), 400);
+            }, durationMs);
+        }
+
+        function showRedeemAlert(username, action, cost, platform, balance) {
+            const costText = cost > 0 ? ` (${cost} PTS)` : '';
+            const html = `
+                <div class="alert-header">
+                    <span class="alert-badge cyan font-mono"><i class="fa-solid fa-bullhorn"></i> REDEEMED</span>
+                    <span class="alert-target font-mono">@${escapeHtml(username)}</span>
+                </div>
+                <div class="alert-body font-mono">
+                    Triggered <strong>[${escapeHtml(action)}]</strong>${costText}!
+                </div>
+                ${balance !== undefined ? `<div class="alert-footer font-mono">Balance: ${balance} pts</div>` : ''}
+            `;
+            createAlertElement('action-redeem', html, 5500);
+        }
+
+        function showAiAlert(username, reply, persona, platform) {
+            const personaName = (persona || 'AI').toUpperCase();
+            const platformIcon = platform?.toLowerCase() === 'kick' ? '<i class="fa-solid fa-bolt"></i>' : 
+                                 platform?.toLowerCase() === 'twitch' ? '<i class="fa-brands fa-twitch"></i>' : 
+                                 platform?.toLowerCase() === 'youtube' ? '<i class="fa-brands fa-youtube"></i>' : 
+                                 '<i class="fa-solid fa-brain"></i>';
+
+            const html = `
+                <div class="alert-header">
+                    <span class="alert-badge font-mono">${platformIcon} ${personaName} AI</span>
+                    <span class="alert-target font-mono">@${escapeHtml(username)}</span>
+                </div>
+                <div class="alert-body font-mono">"${escapeHtml(reply)}"</div>
+            `;
+            createAlertElement('ai-reply', html, 7500);
+        }
+
+        function showGambleAlert(username, won, amount, balance, roll) {
+            const badgeClass = won ? 'green' : '';
+            const cardClass = won ? 'gamble-win' : 'gamble-loss';
+            const icon = won ? '<i class="fa-solid fa-trophy"></i>' : '<i class="fa-solid fa-skull"></i>';
+            const title = won ? 'GAMBLE WIN' : 'GAMBLE LOSS';
+
+            const html = `
+                <div class="alert-header">
+                    <span class="alert-badge ${badgeClass} font-mono">${icon} ${title}</span>
+                    <span class="alert-target font-mono">Roll: ${roll}/100</span>
+                </div>
+                <div class="alert-body font-mono">
+                    @${escapeHtml(username)} ${won ? 'WON' : 'LOST'} <strong>${amount} PTS</strong>!
+                </div>
+                <div class="alert-footer font-mono">Balance: ${balance} pts</div>
+            `;
+            createAlertElement(cardClass, html, 5000);
+        }
+
+        function showHeistStartAlert(leader, countdown) {
+            const html = `
+                <div class="alert-header">
+                    <span class="alert-badge amber font-mono"><i class="fa-solid fa-truck-fast"></i> HEIST INITIATED</span>
+                    <span class="alert-target font-mono">Van leaves in ${countdown}s</span>
+                </div>
+                <div class="alert-body font-mono">
+                    @${escapeHtml(leader)} started a bank heist! Type <strong>!heist [amount]</strong> to join!
+                </div>
+                <div class="countdown-bar-container">
+                    <div class="countdown-bar" style="animation-duration: ${countdown}s;"></div>
+                </div>
+            `;
+            createAlertElement('heist-start', html, countdown * 1000);
+        }
+
+        function showHeistResultAlert(success, crew) {
+            const cardClass = success ? 'heist-win' : 'heist-bust';
+            const badgeClass = success ? 'green' : '';
+            const icon = success ? '<i class="fa-solid fa-sack-dollar"></i>' : '<i class="fa-solid fa-handcuffs"></i>';
+            const title = success ? 'HEIST SUCCESS' : 'HEIST BUSTED';
+
+            const html = `
+                <div class="alert-header">
+                    <span class="alert-badge ${badgeClass} font-mono">${icon} ${title}</span>
+                </div>
+                <div class="alert-body font-mono">
+                    ${success ? 'The crew made off with the loot and doubled their points!' : 'The police intercepted the getaway van! All bets lost!'}
+                </div>
+                <div class="alert-footer font-mono">Crew: ${escapeHtml(crew)}</div>
+            `;
+            createAlertElement(cardClass, html, 7000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        connect();
+    </script>
+</body>
+</html>

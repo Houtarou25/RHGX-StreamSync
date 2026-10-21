@@ -1,0 +1,30 @@
+{
+  "name": "houtaroubot",
+  "version": "1.0.0",
+  "description": "RHGX StreamSync - AI Live Chat Assistant & Streamer.bot Integration for Kick, Twitch, and YouTube",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node test/test_suite.js"
+  },
+  "keywords": [
+    "streamerbot",
+    "gemini-ai",
+    "kick",
+    "twitch",
+    "youtube",
+    "live-chat",
+    "minigames",
+    "obs-overlay"
+  ],
+  "author": "Houtarou25",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

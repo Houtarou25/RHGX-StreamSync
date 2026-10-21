@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHGX StreamSync | Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        body {
+            background-color: #050505;
+            color: #d1d5db;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            cursor: none; /* Custom Sci-Fi Cursor */
+        }
+
+        .font-mono-glitch { font-family: 'Share Tech Mono', monospace; }
+
+        /* Animated Grid Background */
+        .cyber-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(rgba(255, 0, 0, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.04) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+            animation: moveGrid 15s linear infinite;
+        }
+
+        @keyframes moveGrid {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(30px); }
+        }
+
+        /* Glitch Text Effect */
+        .glitch-text { position: relative; color: #fff; }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent;
+        }
+        .glitch-text::before { left: 2px; text-shadow: -2px 0 #ff0000; clip: rect(24px, 550px, 90px, 0); animation: glitch-anim 3s infinite linear alternate-reverse; }
+        .glitch-text::after { left: -2px; text-shadow: -2px 0 #ffffff; clip: rect(85px, 550px, 140px, 0); animation: glitch-anim 2.5s infinite linear alternate-reverse; }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(10px, 9999px, 44px, 0); }
+            20% { clip: rect(85px, 9999px, 59px, 0); }
+            40% { clip: rect(33px, 9999px, 98px, 0); }
+            60% { clip: rect(71px, 9999px, 23px, 0); }
+            80% { clip: rect(14px, 9999px, 88px, 0); }
+            100% { clip: rect(50px, 9999px, 12px, 0); }
+        }
+
+        /* Custom Cursor */
+        #cursor-dot {
+            width: 8px; height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s;
+        }
+        #cursor-outline {
+            width: 32px; height: 32px;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, border-color 0.2s;
+        }
+        
+        a:hover ~ #cursor-outline, button:hover ~ #cursor-outline, input:hover ~ #cursor-outline, select:hover ~ #cursor-outline {
+            width: 48px; height: 48px; border-color: #ef4444;
+        }
+
+        .neon-glow-red { box-shadow: 0 0 15px rgba(220, 38, 38, 0.4), inset 0 0 10px rgba(220, 38, 38, 0.2); }
+        .neon-glow-cyan { box-shadow: 0 0 15px rgba(6, 182, 212, 0.4), inset 0 0 10px rgba(6, 182, 212, 0.2); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #dc2626; border-radius: 4px; }
+
+        .cyber-toggle {
+            -webkit-appearance: none; appearance: none;
+            width: 44px; height: 22px;
+            background: #050505; border: 1px solid #374151; border-radius: 12px;
+            position: relative; cursor: pointer; outline: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cyber-toggle::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 16px; height: 16px;
+            background: #4b5563; border-radius: 50%;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cyber-toggle:checked {
+            border-color: #dc2626; background: rgba(220, 38, 38, 0.15);
+            box-shadow: 0 0 12px rgba(220, 38, 38, 0.4);
+        }
+        .cyber-toggle:checked::after {
+            transform: translateX(22px);
+            background: #ef4444; box-shadow: 0 0 8px #ef4444;
+        }
+
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: url('data:image/svg+xml;utf8,<svg fill="%23ef4444" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>') no-repeat right 10px center; }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .progress-bar-fill { transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Cyberpunk Corner Accent */
+        .cyber-panel {
+            position: relative;
+        }
+        .cyber-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 6px;
+            border-top: 2px solid #ef4444; border-left: 2px solid #ef4444; pointer-events: none;
+        }
+        .cyber-panel::after {
+            content: ''; position: absolute; bottom: 0; right: 0; width: 6px; height: 6px;
+            border-bottom: 2px solid #ef4444; border-right: 2px solid #ef4444; pointer-events: none;
+        }
+
+        /* Toast Notification */
+        #cyberToast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10000;
+            transform: translateY(150%);
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        }
+        #cyberToast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div class="cyber-grid"></div>
+
+    <!-- Custom Cursor -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-outline"></div>
+
+    <!-- Toast Notification -->
+    <div id="cyberToast" class="flex items-center gap-3 px-5 py-3.5 bg-[#0a0a0a] border border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)] font-mono-glitch text-sm text-white">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-red-500 text-base"></i>
+        <span id="toastMsg">ACTION COMPLETED</span>
+    </div>
+
+    <!-- Top Navbar -->
+    <header class="border-b border-red-900/50 bg-[#0a0a0a]/90 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-900 via-red-500 to-red-900"></div>
+        <a href="index.html" class="flex items-center gap-3 group">
+            <div class="h-10 w-10 border-2 border-red-600 flex items-center justify-center font-black text-white text-xl tracking-wider shadow-[0_0_10px_rgba(220,38,38,0.5)] group-hover:bg-red-600 transition">RH</div>
+            <h1 class="text-xl md:text-2xl font-black tracking-tight text-white font-mono-glitch glitch-text" data-text="RHGX_STUDIO">RHGX_STUDIO</h1>
+        </a>
+        <nav class="flex items-center gap-4 md:gap-6 text-sm font-bold text-gray-500 font-mono-glitch uppercase">
+            <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 bg-red-950/40 border border-red-900 text-red-400 text-xs font-bold">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> SYS_CORE
+            </span>
+            <a href="index.html" class="hover:text-red-400 transition flex items-center gap-1.5"><i class="fa-solid fa-house text-xs"></i> HOME</a>
+            <a href="overlay.html" target="_blank" class="hover:text-red-400 transition flex items-center gap-1.5"><i class="fa-solid fa-tower-broadcast text-xs text-red-500"></i> OVERLAY</a>
+            <button onclick="switchTab('tab-setup')" class="hover:text-red-400 transition flex items-center gap-1.5"><i class="fa-solid fa-book text-xs"></i> DOCS</button>
+            <a href="index.html" class="px-3 py-1.5 border border-red-900 text-red-500 hover:bg-red-600 hover:text-white transition text-xs font-bold shadow-[0_0_10px_rgba(220,38,38,0.2)]">DISCONNECT</a>
+        </nav>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+        
+        <!-- Top Telemetry Banner: Server Uplink & OBS Stream -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Uplink Telemetry Card -->
+            <div class="p-5 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <span id="telemetryDot" class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#10b981]"></span>
+                        <span id="telemetryStatus" class="text-xs uppercase font-black tracking-widest text-green-400 font-mono-glitch">UPLINK ACTIVE // PORT 8081</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span id="botConnBadge" class="text-[10px] font-mono-glitch px-2 py-0.5 bg-red-950/40 border border-red-900 text-red-400 uppercase">STREAMER.BOT: 9001</span>
+                        <span id="modelBadge" class="text-[10px] font-mono-glitch px-2 py-0.5 bg-gray-900 border border-gray-800 text-gray-400 uppercase">MODEL: FLASH</span>
+                    </div>
+                </div>
+                <a id="topSupportDevBtn" href="https://ko-fi.com/houtarou25" target="_blank" class="px-4 py-2 bg-transparent border-2 border-red-600 hover:bg-red-600 text-red-500 hover:text-white font-black text-xs uppercase transition font-mono-glitch neon-glow-red flex items-center gap-2">
+                    <i class="fa-solid fa-mug-hot"></i> SUPPORT DEV
+                </a>
+            </div>
+
+            <!-- OBS Browser Source Card -->
+            <div class="p-5 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel flex items-center justify-between">
+                <div class="flex-1 mr-4">
+                    <span class="text-xs uppercase font-black tracking-widest text-red-500 flex items-center gap-1.5 font-mono-glitch">
+                        <i class="fa-solid fa-tower-broadcast animate-pulse"></i> OBS OVERLAY DATA_STREAM
+                    </span>
+                    <div class="mt-2 flex items-center bg-[#050505] border border-red-900/50 p-2">
+                        <input id="obsUrlInput" type="text" readonly value="Loading..." class="bg-transparent text-xs text-red-400 font-mono-glitch w-full focus:outline-none tracking-wider select-all">
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="copyObsUrl()" class="px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase transition font-mono-glitch shadow-[0_0_15px_rgba(220,38,38,0.5)]">
+                        <span id="copyBtnText">COPY</span>
+                    </button>
+                    <a href="overlay.html" target="_blank" title="Launch Preview" class="p-2.5 border border-red-900 hover:border-red-500 text-gray-400 hover:text-red-400 transition text-xs font-mono-glitch flex items-center justify-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <!-- ROUTING SIDEBAR -->
+            <aside class="space-y-2">
+                <div class="p-3 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel sticky top-24">
+                    <div class="flex items-center justify-between px-3 py-2 border-b border-gray-900/80 mb-2">
+                        <p class="text-xs font-black text-red-600 uppercase tracking-widest font-mono-glitch">CONTROL_PANEL</p>
+                        <span class="text-[10px] text-gray-600 font-mono-glitch">v3.1 PRO</span>
+                    </div>
+                    <nav class="space-y-1" id="sidebarNav">
+                        <button onclick="switchTab('tab-config')" class="sidebar-btn w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold bg-red-950/40 text-red-500 border-l-2 border-red-500 font-mono-glitch transition" data-target="tab-config">
+                            <i class="fa-solid fa-network-wired w-4"></i> CONFIGURATION
+                        </button>
+                        <button onclick="switchTab('tab-ai')" class="sidebar-btn w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-gray-500 hover:text-red-400 hover:bg-red-950/20 border-l-2 border-transparent hover:border-red-500 transition font-mono-glitch" data-target="tab-ai">
+                            <i class="fa-solid fa-brain w-4"></i> AI_PERSONALIZATION
+                        </button>
+                        <button onclick="switchTab('tab-chat')" class="sidebar-btn w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-gray-500 hover:text-red-400 hover:bg-red-950/20 border-l-2 border-transparent hover:border-red-500 transition font-mono-glitch" data-target="tab-chat">
+                            <i class="fa-solid fa-comments w-4"></i> CHAT_BEHAVIOR
+                        </button>
+                        <button onclick="switchTab('tab-minigames')" class="sidebar-btn w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-gray-500 hover:text-red-400 hover:bg-red-950/20 border-l-2 border-transparent hover:border-red-500 transition font-mono-glitch" data-target="tab-minigames">
+                            <i class="fa-solid fa-gamepad w-4"></i> MINIGAMES & SOUNDS
+                        </button>
+                        <button onclick="switchTab('tab-loyalty')" class="sidebar-btn w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-gray-500 hover:text-red-400 hover:bg-red-950/20 border-l-2 border-transparent hover:border-red-500 transition font-mono-glitch" data-target="tab-loyalty">
+                            <i class="fa-solid fa-coins w-4"></i> LOYALTY_DB
+                        </button>
+                        <button onclick="switchTab('tab-analytics')" class="sidebar-btn w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-gray-500 hover:text-red-400 hover:bg-red-950/20 border-l-2 border-transparent hover:border-red-500 transition font-mono-glitch" data-target="tab-analytics">
+                            <i class="fa-solid fa-chart-line w-4"></i> ANALYTICS & LEADERBOARD
+                        </button>
+                        <button onclick="switchTab('tab-setup')" class="sidebar-btn w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-gray-500 hover:text-red-400 hover:bg-red-950/20 border-l-2 border-transparent hover:border-red-500 transition font-mono-glitch" data-target="tab-setup">
+                            <i class="fa-solid fa-book w-4"></i> SETUP_GUIDE
+                        </button>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- MAIN DYNAMIC CONTENT AREA -->
+            <section class="lg:col-span-3">
+                
+                <!-- PAGE 1: CONFIGURATION -->
+                <div id="tab-config" class="tab-content active space-y-6">
+                    <div class="p-6 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel">
+                        <div class="border-b border-red-900/30 pb-4 mb-6 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-network-wired text-red-600"></i>
+                                <h2 class="text-base font-black uppercase tracking-widest text-white font-mono-glitch">API & Network Uplink</h2>
+                            </div>
+                            <span class="text-xs text-red-500 font-mono-glitch"><i class="fa-solid fa-lock text-red-600 mr-1"></i> SECURE_STORAGE</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Google Gemini API Key <span class="text-red-600">*</span></label>
+                                <input type="password" id="apiKey" placeholder="AIzaSy..." class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-3 text-sm text-white outline-none transition font-mono-glitch focus:ring-1 focus:ring-red-600">
+                                <span class="text-[10px] text-gray-600 font-mono-glitch">Get free key from aistudio.google.com</span>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">AI Model</label>
+                                <select id="aiModel" class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-3 text-sm text-red-400 outline-none transition font-mono-glitch">
+                                    <option value="gemini-flash-latest">gemini-flash-latest (Recommended)</option>
+                                    <option value="gemini-3.8-flash">gemini-3.8-flash (Latest)</option>
+                                    <option value="gemini-flash-lite-latest">gemini-flash-lite-latest (Fastest / Lowest Tokens)</option>
+                                </select>
+                                <span class="text-[10px] text-gray-600 font-mono-glitch">Auto-fallback enabled if busy</span>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Streamer.bot WebSocket</label>
+                                <input type="text" id="wsPort" value="ws://127.0.0.1:9001" class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-3 text-sm text-red-400 outline-none transition font-mono-glitch">
+                                <span class="text-[10px] text-gray-600 font-mono-glitch">Default port in Streamer.bot is 9001</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 2: AI PERSONALIZATION -->
+                <div id="tab-ai" class="tab-content space-y-6">
+                    <div class="p-6 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel">
+                        <div class="border-b border-red-900/30 pb-4 mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-brain text-red-600"></i>
+                            <h2 class="text-base font-black uppercase tracking-widest text-white font-mono-glitch">AI Personality & Persona</h2>
+                        </div>
+                        <div class="space-y-2 mb-8">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Broadcaster / Channel Name <span class="text-red-600">*</span></label>
+                            <input type="text" id="channelName" placeholder="e.g. Houtarou25" class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-3 text-sm text-white outline-none transition font-mono-glitch">
+                        </div>
+                        <div class="space-y-4 mb-8">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Behavior Preset</label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <button type="button" onclick="selectPersona('rude')" id="btn-rude" class="persona-btn p-4 border border-gray-800 bg-[#050505] text-gray-500 hover:border-gray-600 text-xs font-black uppercase tracking-wider flex flex-col items-center gap-2 transition font-mono-glitch"><i class="fa-solid fa-skull text-red-500 text-xl"></i><span>Hostile / Roast</span></button>
+                                <button type="button" onclick="selectPersona('friendly')" id="btn-friendly" class="persona-btn p-4 border border-red-600 bg-red-950/30 text-white text-xs font-black uppercase tracking-wider flex flex-col items-center gap-2 transition font-mono-glitch"><i class="fa-solid fa-hand-peace text-green-400 text-xl"></i><span>Friendly / Upbeat</span></button>
+                                <button type="button" onclick="selectPersona('gentle')" id="btn-gentle" class="persona-btn p-4 border border-gray-800 bg-[#050505] text-gray-500 hover:border-gray-600 text-xs font-black uppercase tracking-wider flex flex-col items-center gap-2 transition font-mono-glitch"><i class="fa-solid fa-ghost text-cyan-400 text-xl"></i><span>Gentle / Calm</span></button>
+                                <button type="button" onclick="selectPersona('custom')" id="btn-custom" class="persona-btn p-4 border border-gray-800 bg-[#050505] text-gray-500 hover:border-gray-600 text-xs font-black uppercase tracking-wider flex flex-col items-center gap-2 transition font-mono-glitch"><i class="fa-solid fa-code text-purple-400 text-xl"></i><span>Custom Prompt</span></button>
+                            </div>
+                        </div>
+                        <div class="space-y-4 mb-8">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Social Link Knowledge Base</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="flex items-center bg-[#050505] border border-gray-800 focus-within:border-red-600 transition"><div class="p-3 text-gray-600"><i class="fa-brands fa-instagram w-4 text-center"></i></div><input type="text" id="linkIg" placeholder="Instagram URL" class="w-full bg-transparent text-sm text-white outline-none font-mono-glitch"></div>
+                                <div class="flex items-center bg-[#050505] border border-gray-800 focus-within:border-red-600 transition"><div class="p-3 text-gray-600"><i class="fa-brands fa-youtube w-4 text-center"></i></div><input type="text" id="linkYt" placeholder="YouTube URL" class="w-full bg-transparent text-sm text-white outline-none font-mono-glitch"></div>
+                                <div class="flex items-center bg-[#050505] border border-gray-800 focus-within:border-red-600 transition"><div class="p-3 text-gray-600"><i class="fa-brands fa-twitch w-4 text-center"></i></div><input type="text" id="linkTwitch" placeholder="Twitch URL" class="w-full bg-transparent text-sm text-white outline-none font-mono-glitch"></div>
+                                <div class="flex items-center bg-[#050505] border border-gray-800 focus-within:border-red-600 transition"><div class="p-3 text-gray-600"><i class="fa-solid fa-k w-4 text-center"></i></div><input type="text" id="linkKick" placeholder="Kick URL" class="w-full bg-transparent text-sm text-white outline-none font-mono-glitch"></div>
+                                <div class="flex items-center bg-[#050505] border border-gray-800 focus-within:border-red-600 transition"><div class="p-3 text-gray-600"><i class="fa-brands fa-discord w-4 text-center"></i></div><input type="text" id="linkDiscord" placeholder="Discord Invite URL" class="w-full bg-transparent text-sm text-white outline-none font-mono-glitch"></div>
+                                <div class="flex items-center bg-[#050505] border border-gray-800 focus-within:border-red-600 transition"><div class="p-3 text-gray-600"><i class="fa-solid fa-globe w-4 text-center"></i></div><input type="text" id="linkWeb" placeholder="Custom Website URL" class="w-full bg-transparent text-sm text-white outline-none font-mono-glitch"></div>
+                                <div class="flex items-center bg-[#050505] border border-red-950/60 focus-within:border-red-600 transition"><div class="p-3 text-red-500"><i class="fa-solid fa-mug-hot w-4 text-center"></i></div><input type="text" id="linkKofi" placeholder="Ko-fi URL (e.g. https://ko-fi.com/yourname)" class="w-full bg-transparent text-sm text-white outline-none font-mono-glitch"></div>
+                                <div class="flex items-center bg-[#050505] border border-gray-800 focus-within:border-red-600 transition"><div class="p-3 text-yellow-500"><i class="fa-solid fa-shield-halved w-4 text-center"></i></div><input type="text" id="kofiToken" placeholder="Ko-fi Webhook Secret Token (Optional)" class="w-full bg-transparent text-sm text-white outline-none font-mono-glitch"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Extra Background Knowledge / Streamer Rules</label>
+                            <textarea id="extraKnowledge" rows="3" placeholder="// Inject stream lore, PC specs, game details, or rules here..." class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 p-4 text-sm text-red-400 outline-none transition font-mono-glitch"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 3: CHAT BEHAVIOR -->
+                <div id="tab-chat" class="tab-content space-y-6">
+                    <div class="p-6 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel">
+                        <div class="border-b border-red-900/30 pb-4 mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-comments text-red-600"></i>
+                            <h2 class="text-base font-black uppercase tracking-widest text-white font-mono-glitch">Chat Triggers & Permissions</h2>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Reply Trigger Mode</label>
+                                <select id="triggerMode" class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-3 text-sm text-white outline-none transition font-mono-glitch">
+                                    <option value="strict">Only Respond to Triggers (e.g. !bot)</option>
+                                    <option value="random">Respond to Triggers + Random Messages (Low Tokens)</option>
+                                </select>
+                                <span class="text-[10px] text-gray-600 font-mono-glitch">Random mode chimes in every 45s on chat with short witty one-liners</span>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Trigger Prefix</label>
+                                <input type="text" id="triggerPrefix" value="!bot" placeholder="e.g. !bot" class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-3 text-sm text-red-400 outline-none transition font-mono-glitch font-bold">
+                                <span class="text-[10px] text-gray-600 font-mono-glitch">Persistent and saved across restarts</span>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Min Permissions</label>
+                                <select id="minPermissions" class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-3 text-sm text-white outline-none transition font-mono-glitch">
+                                    <option value="everyone">Everyone (Public Chat)</option>
+                                    <option value="sub_vip_mod">Subs + VIPs + Mods</option>
+                                    <option value="vip_mod">VIPs + Mods</option>
+                                    <option value="mod_only">Mods Only</option>
+                                    <option value="broadcaster">Broadcaster Only</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Bot Blacklist (Ignored Users)</label>
+                                <input type="text" id="blacklist" placeholder="Nightbot, StreamElements, BotRix..." class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-3 text-sm text-gray-400 outline-none transition font-mono-glitch">
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-[#050505] border border-gray-800 flex items-center justify-between mb-8">
+                            <div>
+                                <span class="text-sm font-bold text-white uppercase tracking-wider font-mono-glitch flex items-center gap-2"><i class="fa-solid fa-sparkles text-yellow-400"></i> Stream Event Reactions</span>
+                                <p class="text-xs text-gray-500 mt-1">Automatically acknowledge Super Chats, Subs, Raids, and Follows in chat.</p>
+                            </div>
+                            <input type="checkbox" id="eventReactionsToggle" class="cyber-toggle" checked/>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch flex items-center gap-2"><i class="fa-solid fa-clock text-red-600"></i> Periodic Stream Timers</label>
+                                <button onclick="addTimerRow()" class="px-3 py-1.5 bg-red-950/50 border border-red-900 text-red-500 hover:bg-red-600 hover:text-white text-xs font-bold transition font-mono-glitch">+ ADD TIMER</button>
+                            </div>
+                            <div id="timersContainer" class="space-y-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 4: MINIGAMES -->
+                <div id="tab-minigames" class="tab-content space-y-6">
+                    <div class="p-6 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel">
+                        <div class="border-b border-red-900/30 pb-4 mb-6 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-gamepad text-red-600"></i>
+                                <h2 class="text-base font-black uppercase tracking-widest text-white font-mono-glitch">Minigames & Audio Redemptions</h2>
+                            </div>
+                            <div class="flex items-center gap-3 border border-red-900 bg-red-950/20 px-3 py-1.5 rounded">
+                                <span class="text-xs font-bold text-red-500 uppercase font-mono-glitch">Engine Status</span>
+                                <input type="checkbox" id="minigamesGlobalToggle" class="cyber-toggle" checked/>
+                            </div>
+                        </div>
+
+                        <!-- Streamer.bot Action Redemptions -->
+                        <div class="space-y-3 mb-10 pb-6 border-b border-gray-900 bg-cyan-950/10 border border-cyan-900/40 p-4">
+                            <div>
+                                <h3 class="text-sm font-bold text-cyan-400 font-mono-glitch flex items-center gap-2 mb-1">
+                                    <i class="fa-solid fa-bullhorn text-cyan-400"></i> Streamer.bot Action Redemptions (Sound FX)
+                                </h3>
+                                <p class="text-[11px] text-gray-400">
+                                    Map Streamer.bot actions as <code class="text-cyan-300 font-bold">action_name:cost</code>. Viewers type <code class="text-cyan-400">!redeem [name]</code> or shorthand like <code class="text-cyan-400">!sus</code> to trigger sounds live on stream.
+                                </p>
+                            </div>
+                            <input type="text" id="actionRedemptions" value="sus:0, wow:0, ara:0" placeholder="sus:0, wow:25, ara:50" class="w-full bg-[#050505] border border-cyan-800/80 px-4 py-3 text-sm text-cyan-300 font-mono-glitch outline-none focus:border-cyan-400">
+                            <div class="flex flex-wrap gap-2 text-[10px] text-gray-500 font-mono-glitch">
+                                <span>Detected sounds in Streamer.bot:</span>
+                                <span class="text-cyan-400 font-bold">!sus (Among Us)</span> • 
+                                <span class="text-cyan-400 font-bold">!wow (Anime Wow)</span> • 
+                                <span class="text-cyan-400 font-bold">!ara (Ara Ara)</span>
+                            </div>
+                        </div>
+
+                        <!-- Gamble Minigame -->
+                        <div class="space-y-4 mb-10 border-b border-gray-900 pb-6">
+                            <div>
+                                <h3 class="text-sm font-bold text-red-500 font-mono-glitch flex items-center gap-2 mb-1"><i class="fa-solid fa-dice"></i> Gamble Minigame (!gamble [amount])</h3>
+                                <p class="text-[11px] text-gray-500">Viewers roll a 100-sided die to double, triple, or lose points.</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase font-mono-glitch">Min. Amount</label><input type="number" id="gambleMin" value="10" class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-2 text-sm text-white outline-none font-mono-glitch"></div>
+                                <div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase font-mono-glitch">Max. Amount</label><input type="number" id="gambleMax" value="10000" class="w-full bg-[#050505] border border-gray-800 focus:border-red-600 px-4 py-2 text-sm text-white outline-none font-mono-glitch"></div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Reward Multipliers</label>
+                                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                    <div><span class="text-[10px] text-gray-500 block mb-1">Roll 1-25</span><input type="number" id="gambleMul1" value="0" step="0.1" class="w-full bg-[#050505] border border-gray-800 text-center text-sm text-white font-mono-glitch"></div>
+                                    <div><span class="text-[10px] text-gray-500 block mb-1">Roll 26-50</span><input type="number" id="gambleMul2" value="0" step="0.1" class="w-full bg-[#050505] border border-gray-800 text-center text-sm text-white font-mono-glitch"></div>
+                                    <div><span class="text-[10px] text-green-600 block mb-1">Roll 51-75 (2x)</span><input type="number" id="gambleMul3" value="2" step="0.1" class="w-full bg-[#050505] border border-green-900/50 text-center text-sm text-green-500 font-mono-glitch"></div>
+                                    <div><span class="text-[10px] text-green-600 block mb-1">Roll 76-98 (2x)</span><input type="number" id="gambleMul4" value="2" step="0.1" class="w-full bg-[#050505] border border-green-900/50 text-center text-sm text-green-500 font-mono-glitch"></div>
+                                    <div><span class="text-[10px] text-yellow-600 block mb-1">Roll 99-100 (3x)</span><input type="number" id="gambleMul5" value="3" step="0.1" class="w-full bg-[#050505] border border-yellow-900/50 text-center text-sm text-yellow-500 font-mono-glitch"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Heist Minigame -->
+                        <div class="space-y-4 mb-10 pb-6 border-b border-gray-900">
+                            <div>
+                                <h3 class="text-sm font-bold text-amber-500 font-mono-glitch flex items-center gap-2 mb-1"><i class="fa-solid fa-mask"></i> Multiplayer Heist (!heist [amount])</h3>
+                                <p class="text-[11px] text-gray-500">Multiplayer bank heist chat event with animated OBS countdown bar.</p>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase font-mono-glitch">Min. Bet</label><input type="number" id="heistMin" value="50" class="w-full bg-[#050505] border border-gray-800 px-3 py-2 text-sm text-white font-mono-glitch"></div>
+                                <div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase font-mono-glitch">Max. Bet</label><input type="number" id="heistMax" value="5000" class="w-full bg-[#050505] border border-gray-800 px-3 py-2 text-sm text-white font-mono-glitch"></div>
+                                <div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase font-mono-glitch">Base Win Chance (%)</label><input type="number" id="heistChance" value="40" class="w-full bg-[#050505] border border-gray-800 px-3 py-2 text-sm text-white font-mono-glitch"></div>
+                                <div class="space-y-1"><label class="block text-[10px] font-bold text-gray-400 uppercase font-mono-glitch">Join Time (Secs)</label><input type="number" id="heistTime" value="30" class="w-full bg-[#050505] border border-gray-800 px-3 py-2 text-sm text-white font-mono-glitch"></div>
+                            </div>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="p-4 border border-red-900 bg-red-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div>
+                                <h3 class="text-sm font-bold text-red-500 flex items-center gap-2 font-mono-glitch uppercase tracking-widest"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h3>
+                                <p class="text-[11px] text-gray-400 font-mono-glitch mt-0.5">Permanently wipe all viewer point balances to 0 in points.json.</p>
+                            </div>
+                            <button onclick="resetAllPoints()" class="px-5 py-2.5 bg-red-900 hover:bg-red-600 text-white font-black text-xs uppercase transition font-mono-glitch border border-red-700 whitespace-nowrap">RESET ALL POINTS TO 0</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 5: LOYALTY DB -->
+                <div id="tab-loyalty" class="tab-content space-y-6">
+                    <div class="p-6 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel">
+                        <div class="border-b border-red-900/30 pb-4 mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-coins text-red-600"></i>
+                            <h2 class="text-base font-black uppercase tracking-widest text-white font-mono-glitch">Loyalty Points System</h2>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-8 font-mono-glitch">Reward viewers automatically as they watch your live streams.</p>
+                        <div class="space-y-3 md:w-1/2">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider font-mono-glitch">Passive Points Accumulation Rate</label>
+                            <p class="text-[11px] text-gray-500">Points automatically granted to active chatters per minute.</p>
+                            <div class="flex items-center bg-[#050505] border border-gray-800 focus-within:border-red-600 transition">
+                                <div class="p-3 text-red-600"><i class="fa-solid fa-plus w-4 text-center"></i></div>
+                                <input type="number" id="pointsPerMin" value="2" min="0" class="w-full bg-transparent text-sm text-white outline-none font-mono-glitch py-3 px-2">
+                                <div class="p-3 text-gray-600 text-xs font-bold font-mono-glitch whitespace-nowrap">PTS/MIN</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 6: ANALYTICS & LEADERBOARD -->
+                <div id="tab-analytics" class="tab-content space-y-6">
+                    <div class="p-6 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel">
+                        <div class="border-b border-red-900/30 pb-4 mb-6 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-red-600"></i>
+                                <h2 class="text-base font-black uppercase tracking-widest text-white font-mono-glitch">Interactive Analytics & Leaderboard</h2>
+                            </div>
+                            <button onclick="refreshLiveStats()" class="text-xs font-bold text-green-400 bg-green-950/30 border border-green-900 px-3 py-1 hover:bg-green-600 hover:text-white transition font-mono-glitch flex items-center gap-1.5">
+                                <i class="fa-solid fa-rotate animate-spin-reverse"></i> REFRESH STATS
+                            </button>
+                        </div>
+                        
+                        <!-- Top Stats Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            <div class="p-5 bg-[#050505] border border-gray-800 text-center cyber-panel">
+                                <h4 class="text-[11px] text-gray-500 uppercase tracking-widest font-mono-glitch mb-1"><i class="fa-solid fa-brain text-red-500 mr-1"></i> AI Responses</h4>
+                                <span id="statAiResponses" class="text-3xl font-black text-white font-mono-glitch">0</span>
+                            </div>
+                            <div class="p-5 bg-[#050505] border border-gray-800 text-center cyber-panel">
+                                <h4 class="text-[11px] text-gray-500 uppercase tracking-widest font-mono-glitch mb-1"><i class="fa-solid fa-coins text-amber-500 mr-1"></i> Points in Circulation</h4>
+                                <span id="statPointsCirculation" class="text-3xl font-black text-amber-400 font-mono-glitch">0</span>
+                            </div>
+                            <div class="p-5 bg-[#050505] border border-gray-800 text-center cyber-panel">
+                                <h4 class="text-[11px] text-gray-500 uppercase tracking-widest font-mono-glitch mb-1"><i class="fa-solid fa-gamepad text-cyan-500 mr-1"></i> Games & Redemptions</h4>
+                                <span id="statMinigames" class="text-3xl font-black text-cyan-400 font-mono-glitch">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Leaderboard Table (Live DB Data) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-sm font-bold text-yellow-500 uppercase tracking-widest font-mono-glitch flex items-center gap-2">
+                                    <i class="fa-solid fa-crown text-yellow-500"></i> Viewer Loyalty Leaderboard
+                                </h3>
+                                <span id="totalViewersCount" class="text-xs text-gray-500 font-mono-glitch">0 registered chatters</span>
+                            </div>
+                            <div class="overflow-x-auto border border-gray-800">
+                                <table class="w-full text-left text-xs font-mono-glitch text-gray-400">
+                                    <thead class="bg-[#050505] text-gray-500 border-b border-gray-800">
+                                        <tr>
+                                            <th class="px-4 py-3">Rank</th>
+                                            <th class="px-4 py-3 text-white">Viewer Handle</th>
+                                            <th class="px-4 py-3 text-right text-red-500">Balance</th>
+                                            <th class="px-4 py-3 text-right">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboardBody" class="bg-[#0a0a0a]">
+                                        <tr class="border-b border-gray-900">
+                                            <td colspan="4" class="px-4 py-8 text-center text-gray-600 font-mono-glitch uppercase tracking-widest">
+                                                <i class="fa-solid fa-satellite-dish mb-2 text-xl block text-gray-700 animate-pulse"></i>
+                                                Loading leaderboard datastream...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 7: SETUP GUIDE & DOCS -->
+                <div id="tab-setup" class="tab-content space-y-6">
+                    <div class="p-8 bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-900 cyber-panel space-y-8">
+                        <div class="border-b border-red-900/30 pb-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-book-bookmark text-2xl text-red-600"></i>
+                                <div>
+                                    <h2 class="text-base font-black uppercase tracking-widest text-white font-mono-glitch">System Documentation & Quickstart</h2>
+                                    <p class="text-xs text-gray-500 font-mono-glitch">Complete step-by-step setup manual for Project HoutarouBot</p>
+                                </div>
+                            </div>
+                            <span class="text-xs px-3 py-1 bg-red-950/40 border border-red-900 text-red-400 font-mono-glitch">v3.1 READY</span>
+                        </div>
+
+                        <!-- Step by step grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="p-4 bg-[#050505] border border-gray-800 space-y-2">
+                                <div class="flex items-center gap-2 text-red-500 font-mono-glitch font-bold text-sm">
+                                    <span class="w-6 h-6 rounded bg-red-950 flex items-center justify-center border border-red-900">1</span>
+                                    Gemini AI Key
+                                </div>
+                                <p class="text-xs text-gray-400 font-mono-glitch leading-relaxed">
+                                    Generate a free API key at <a href="https://aistudio.google.com" target="_blank" class="text-red-400 underline">aistudio.google.com</a>. Paste it in the Configuration tab. It auto-retries on server busy (503/429) and falls back models smoothly.
+                                </p>
+                            </div>
+
+                            <div class="p-4 bg-[#050505] border border-gray-800 space-y-2">
+                                <div class="flex items-center gap-2 text-cyan-400 font-mono-glitch font-bold text-sm">
+                                    <span class="w-6 h-6 rounded bg-cyan-950 flex items-center justify-center border border-cyan-900">2</span>
+                                    Streamer.bot WebSocket
+                                </div>
+                                <p class="text-xs text-gray-400 font-mono-glitch leading-relaxed">
+                                    In Streamer.bot, go to <strong>Servers/Clients &gt; WebSocket Server</strong>. Ensure it is listening on <code class="text-cyan-300">127.0.0.1:9001</code> with auto-start enabled.
+                                </p>
+                            </div>
+
+                            <div class="p-4 bg-[#050505] border border-gray-800 space-y-2">
+                                <div class="flex items-center gap-2 text-green-400 font-mono-glitch font-bold text-sm">
+                                    <span class="w-6 h-6 rounded bg-green-950 flex items-center justify-center border border-green-900">3</span>
+                                    Streamer.bot Reply Actions
+                                </div>
+                                <p class="text-xs text-gray-400 font-mono-glitch leading-relaxed">
+                                    In Streamer.bot, actions named <code class="text-green-300">AI_Reply_Kick</code>, <code class="text-green-300">AI_Reply_Twitch</code>, and <code class="text-green-300">AI_Reply_YouTube</code> route the AI responses back into chat via your bot account without authentication errors.
+                                </p>
+                            </div>
+
+                            <div class="p-4 bg-[#050505] border border-gray-800 space-y-2">
+                                <div class="flex items-center gap-2 text-yellow-400 font-mono-glitch font-bold text-sm">
+                                    <span class="w-6 h-6 rounded bg-yellow-950 flex items-center justify-center border border-yellow-900">4</span>
+                                    Audio Redemptions (!redeem)
+                                </div>
+                                <p class="text-xs text-gray-400 font-mono-glitch leading-relaxed">
+                                    Set actions in Minigames tab (e.g. <code class="text-yellow-300">sus:0, wow:25, ara:50</code>). Viewers use <code class="text-yellow-300">!redeem sus</code> or shorthand <code class="text-yellow-300">!sus</code> to trigger the sound live!
+                                </p>
+                            </div>
+
+                            <div class="p-4 bg-[#050505] border border-gray-800 space-y-2">
+                                <div class="flex items-center gap-2 text-purple-400 font-mono-glitch font-bold text-sm">
+                                    <span class="w-6 h-6 rounded bg-purple-950 flex items-center justify-center border border-purple-900">5</span>
+                                    OBS Studio Overlay
+                                </div>
+                                <p class="text-xs text-gray-400 font-mono-glitch leading-relaxed">
+                                    In OBS, add a <strong>Browser Source</strong> with URL <code class="text-purple-300">http://localhost:8081/overlay.html</code> (1920x1080). Neon cards popup on AI replies, rolls, and redemptions!
+                                </p>
+                            </div>
+
+                            <div class="p-4 bg-[#050505] border border-gray-800 space-y-2">
+                                <div class="flex items-center gap-2 text-red-400 font-mono-glitch font-bold text-sm">
+                                    <span class="w-6 h-6 rounded bg-red-950 flex items-center justify-center border border-red-900">6</span>
+                                    Chat Commands Cheatsheet
+                                </div>
+                                <p class="text-xs text-gray-400 font-mono-glitch leading-relaxed">
+                                    <code class="text-white">!bot [msg]</code> • <code class="text-white">!points</code> • <code class="text-white">!donate / !kofi</code> • <code class="text-white">!gamble</code> • <code class="text-white">!heist</code> • <code class="text-white">!redeem [name]</code>
+                                </p>
+                            </div>
+
+                            <div class="p-4 bg-[#050505] border border-red-900/60 bg-red-950/10 space-y-2 md:col-span-2">
+                                <div class="flex items-center gap-2 text-pink-400 font-mono-glitch font-bold text-sm">
+                                    <span class="w-6 h-6 rounded bg-pink-950 flex items-center justify-center border border-pink-900">7</span>
+                                    <i class="fa-solid fa-mug-hot text-pink-400 mr-1"></i> Ko-fi Donations & Live Stream Alerts Setup
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono-glitch text-gray-400">
+                                    <div>
+                                        <strong class="text-white">Option A: Simple Link (!donate in chat)</strong>
+                                        <p class="mt-1">Put your Ko-fi link in <span class="text-red-400">Social Links</span> above. When viewers type <code class="text-white">!donate</code> or <code class="text-white">!kofi</code> in chat, the bot instantly sends your link! No API needed.</p>
+                                    </div>
+                                    <div>
+                                        <strong class="text-white">Option B: Real-Time Live OBS Alerts (Free Webhook)</strong>
+                                        <p class="mt-1">Go to Ko-fi &gt; <strong>Settings &gt; Webhooks</strong>. Set Webhook URL to <code class="text-green-400">http://&lt;your-host&gt;:8081/api/kofi-webhook</code>. Live donations trigger neon screen alerts, chat thank-yous, and auto bonus points!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Floating Save Button -->
+                <div class="flex justify-end mt-6 sticky bottom-6 z-50">
+                    <button onclick="saveConfiguration()" class="px-8 py-4 bg-red-600 hover:bg-white hover:text-black text-white font-black text-sm uppercase tracking-widest flex items-center gap-3 transition font-mono-glitch shadow-[0_0_25px_rgba(220,38,38,0.5)] border border-red-500 hover:border-white">
+                        <i class="fa-solid fa-upload"></i> OVERWRITE_MEM
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        let selectedPersona = 'friendly';
+
+        // Custom Cursor trailing logic
+        const cursorDot = document.getElementById('cursor-dot');
+        const cursorOutline = document.getElementById('cursor-outline');
+
+        window.addEventListener('mousemove', function(e) {
+            const posX = e.clientX;
+            const posY = e.clientY;
+
+            cursorDot.style.left = `${posX}px`;
+            cursorDot.style.top = `${posY}px`;
+
+            cursorOutline.animate({
+                left: `${posX}px`,
+                top: `${posY}px`
+            }, { duration: 500, fill: "forwards" });
+        });
+
+        document.addEventListener('mouseleave', () => {
+            cursorDot.style.opacity = '0';
+            cursorOutline.style.opacity = '0';
+        });
+        document.addEventListener('mouseenter', () => {
+            cursorDot.style.opacity = '1';
+            cursorOutline.style.opacity = '1';
+        });
+
+        function showCyberToast(message, type = 'success') {
+            const toast = document.getElementById('cyberToast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.innerText = message;
+            if (type === 'warning') {
+                toastIcon.className = 'fa-solid fa-triangle-exclamation text-amber-500 text-base';
+                toast.style.borderColor = '#f59e0b';
+                toast.style.boxShadow = '0 0 20px rgba(245, 158, 11, 0.4)';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-check text-red-500 text-base';
+                toast.style.borderColor = '#dc2626';
+                toast.style.boxShadow = '0 0 20px rgba(220, 38, 38, 0.5)';
+            }
+
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Initial load from localStorage
+            document.getElementById('apiKey').value = localStorage.getItem('rhgx_api_key') || '';
+            document.getElementById('aiModel').value = localStorage.getItem('rhgx_ai_model') || 'gemini-flash-latest';
+            document.getElementById('wsPort').value = localStorage.getItem('rhgx_ws_port') || 'ws://127.0.0.1:9001';
+            
+            document.getElementById('channelName').value = localStorage.getItem('rhgx_channel_name') || '';
+            selectPersona(localStorage.getItem('rhgx_persona') || 'friendly');
+            document.getElementById('linkIg').value = localStorage.getItem('rhgx_link_ig') || '';
+            document.getElementById('linkYt').value = localStorage.getItem('rhgx_link_yt') || '';
+            document.getElementById('linkTwitch').value = localStorage.getItem('rhgx_link_twitch') || '';
+            document.getElementById('linkKick').value = localStorage.getItem('rhgx_link_kick') || '';
+            document.getElementById('linkDiscord').value = localStorage.getItem('rhgx_link_discord') || '';
+            document.getElementById('linkWeb').value = localStorage.getItem('rhgx_link_web') || '';
+            document.getElementById('linkKofi').value = localStorage.getItem('rhgx_link_kofi') || '';
+            document.getElementById('kofiToken').value = localStorage.getItem('rhgx_kofi_token') || '';
+            document.getElementById('extraKnowledge').value = localStorage.getItem('rhgx_extra_knowledge') || '';
+
+            document.getElementById('triggerMode').value = localStorage.getItem('rhgx_trigger_mode') || 'strict';
+            document.getElementById('triggerPrefix').value = localStorage.getItem('rhgx_trigger_prefix') || '!bot';
+            document.getElementById('minPermissions').value = localStorage.getItem('rhgx_min_permissions') || 'everyone';
+            document.getElementById('blacklist').value = localStorage.getItem('rhgx_blacklist') || '';
+            document.getElementById('eventReactionsToggle').checked = localStorage.getItem('rhgx_event_reactions') !== 'false';
+
+            document.getElementById('minigamesGlobalToggle').checked = localStorage.getItem('rhgx_minigames_enabled') !== 'false';
+            
+            document.getElementById('gambleMin').value = localStorage.getItem('rhgx_gamble_min') || '10';
+            document.getElementById('gambleMax').value = localStorage.getItem('rhgx_gamble_max') || '10000';
+            document.getElementById('gambleMul1').value = localStorage.getItem('rhgx_gamble_mul1') || '0';
+            document.getElementById('gambleMul2').value = localStorage.getItem('rhgx_gamble_mul2') || '0';
+            document.getElementById('gambleMul3').value = localStorage.getItem('rhgx_gamble_mul3') || '2';
+            document.getElementById('gambleMul4').value = localStorage.getItem('rhgx_gamble_mul4') || '2';
+            document.getElementById('gambleMul5').value = localStorage.getItem('rhgx_gamble_mul5') || '3';
+            
+            document.getElementById('heistMin').value = localStorage.getItem('rhgx_heist_min') || '50';
+            document.getElementById('heistMax').value = localStorage.getItem('rhgx_heist_max') || '5000';
+            document.getElementById('heistChance').value = localStorage.getItem('rhgx_heist_chance') || '40';
+            document.getElementById('heistTime').value = localStorage.getItem('rhgx_heist_time') || '30';
+            document.getElementById('actionRedemptions').value = localStorage.getItem('rhgx_action_redemptions') || 'sus:0, wow:0, ara:0';
+            document.getElementById('pointsPerMin').value = localStorage.getItem('rhgx_points_per_min') || '2';
+
+            loadTimers();
+            updateObsUrl();
+
+            // Synchronize with backend config.json as the authoritative master source
+            fetch('/config')
+                .then(r => r.json())
+                .then(backendConfig => {
+                    if (backendConfig.apiKey !== undefined && backendConfig.apiKey !== '') {
+                        document.getElementById('apiKey').value = backendConfig.apiKey;
+                        localStorage.setItem('rhgx_api_key', backendConfig.apiKey);
+                    }
+                    if (backendConfig.aiModel) {
+                        document.getElementById('aiModel').value = backendConfig.aiModel;
+                        localStorage.setItem('rhgx_ai_model', backendConfig.aiModel);
+                        const mb = document.getElementById('modelBadge');
+                        if (mb) mb.innerText = `MODEL: ${backendConfig.aiModel.toUpperCase()}`;
+                    }
+                    if (backendConfig.streamerBotPort) {
+                        document.getElementById('wsPort').value = `ws://127.0.0.1:${backendConfig.streamerBotPort}`;
+                        localStorage.setItem('rhgx_ws_port', `ws://127.0.0.1:${backendConfig.streamerBotPort}`);
+                    }
+                    if (backendConfig.channelName) {
+                        document.getElementById('channelName').value = backendConfig.channelName;
+                        localStorage.setItem('rhgx_channel_name', backendConfig.channelName);
+                    }
+                    if (backendConfig.persona) {
+                        selectPersona(backendConfig.persona);
+                        localStorage.setItem('rhgx_persona', backendConfig.persona);
+                    }
+                    if (backendConfig.links) {
+                        document.getElementById('linkIg').value = backendConfig.links.ig || '';
+                        document.getElementById('linkYt').value = backendConfig.links.yt || '';
+                        document.getElementById('linkTwitch').value = backendConfig.links.twitch || '';
+                        document.getElementById('linkKick').value = backendConfig.links.kick || '';
+                        document.getElementById('linkDiscord').value = backendConfig.links.discord || '';
+                        document.getElementById('linkWeb').value = backendConfig.links.web || '';
+                        document.getElementById('linkKofi').value = backendConfig.links.kofi || '';
+                    }
+                    if (backendConfig.kofiVerificationToken !== undefined) document.getElementById('kofiToken').value = backendConfig.kofiVerificationToken;
+                    if (backendConfig.extraKnowledge !== undefined) {
+                        document.getElementById('extraKnowledge').value = backendConfig.extraKnowledge;
+                        localStorage.setItem('rhgx_extra_knowledge', backendConfig.extraKnowledge);
+                    }
+                    if (backendConfig.triggerMode) {
+                        document.getElementById('triggerMode').value = backendConfig.triggerMode;
+                        localStorage.setItem('rhgx_trigger_mode', backendConfig.triggerMode);
+                    }
+                    if (backendConfig.triggerPrefix) {
+                        document.getElementById('triggerPrefix').value = backendConfig.triggerPrefix;
+                        localStorage.setItem('rhgx_trigger_prefix', backendConfig.triggerPrefix);
+                    }
+                    if (backendConfig.minPermissions) {
+                        document.getElementById('minPermissions').value = backendConfig.minPermissions;
+                        localStorage.setItem('rhgx_min_permissions', backendConfig.minPermissions);
+                    }
+                    if (backendConfig.blacklist !== undefined) {
+                        document.getElementById('blacklist').value = backendConfig.blacklist;
+                        localStorage.setItem('rhgx_blacklist', backendConfig.blacklist);
+                    }
+                    if (backendConfig.actionRedemptions !== undefined) {
+                        document.getElementById('actionRedemptions').value = backendConfig.actionRedemptions;
+                        localStorage.setItem('rhgx_action_redemptions', backendConfig.actionRedemptions);
+                    }
+                    if (backendConfig.gambleMin !== undefined) document.getElementById('gambleMin').value = backendConfig.gambleMin;
+                    if (backendConfig.gambleMax !== undefined) document.getElementById('gambleMax').value = backendConfig.gambleMax;
+                    if (backendConfig.heistMin !== undefined) document.getElementById('heistMin').value = backendConfig.heistMin;
+                    if (backendConfig.heistMax !== undefined) document.getElementById('heistMax').value = backendConfig.heistMax;
+                    if (backendConfig.pointsPerMin !== undefined) document.getElementById('pointsPerMin').value = backendConfig.pointsPerMin;
+
+                    updateObsUrl();
+                })
+                .catch(() => {});
+
+            // Fetch live stats & leaderboard
+            refreshLiveStats();
+        });
+
+        function refreshLiveStats() {
+            fetch('/api/stats')
+                .then(r => r.json())
+                .then(data => {
+                    // Top Telemetry
+                    const dot = document.getElementById('telemetryDot');
+                    const statusText = document.getElementById('telemetryStatus');
+                    const botBadge = document.getElementById('botConnBadge');
+
+                    if (dot && statusText) {
+                        dot.className = 'w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#10b981]';
+                        statusText.innerText = `CORE SERVER: ONLINE (UPTIME: ${data.uptime || 0}s)`;
+                    }
+
+                    if (botBadge) {
+                        if (data.botConnected) {
+                            botBadge.className = 'text-[10px] font-mono-glitch px-2 py-0.5 bg-green-950/40 border border-green-800 text-green-400 uppercase font-bold';
+                            botBadge.innerHTML = '<i class="fa-solid fa-circle-check text-green-400 mr-1"></i>STREAMER.BOT: CONNECTED';
+                        } else {
+                            botBadge.className = 'text-[10px] font-mono-glitch px-2 py-0.5 bg-amber-950/40 border border-amber-800 text-amber-400 uppercase';
+                            botBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>STREAMER.BOT: PORT ' + (data.streamerBotPort || 9001);
+                        }
+                    }
+
+                    // Stat numbers
+                    const elAi = document.getElementById('statAiResponses');
+                    const elPts = document.getElementById('statPointsCirculation');
+                    const elGames = document.getElementById('statMinigames');
+                    const elUsers = document.getElementById('totalViewersCount');
+
+                    if (elAi) elAi.innerText = data.aiResponses || 0;
+                    if (elPts) elPts.innerText = (data.totalPoints || 0).toLocaleString();
+                    if (elGames) elGames.innerText = data.minigamesPlayed || 0;
+                    if (elUsers) elUsers.innerText = `${data.totalUsers || 0} registered chatters`;
+
+                    // Leaderboard Table
+                    const tbody = document.getElementById('leaderboardBody');
+                    if (tbody && data.leaderboard) {
+                        if (data.leaderboard.length === 0) {
+                            tbody.innerHTML = `
+                                <tr class="border-b border-gray-900">
+                                    <td colspan="4" class="px-4 py-8 text-center text-gray-600 font-mono-glitch uppercase tracking-widest">
+                                        No active users in points database yet. Chat to earn!
+                                    </td>
+                                </tr>
+                            `;
+                        } else {
+                            tbody.innerHTML = data.leaderboard.map((item, idx) => {
+                                const rank = idx + 1;
+                                let rankBadge = `<span class="text-gray-500 font-bold">#${rank}</span>`;
+                                if (rank === 1) rankBadge = '<span class="text-yellow-400 font-black"><i class="fa-solid fa-crown mr-1"></i>#1</span>';
+                                else if (rank === 2) rankBadge = '<span class="text-gray-300 font-bold"><i class="fa-solid fa-medal mr-1"></i>#2</span>';
+                                else if (rank === 3) rankBadge = '<span class="text-amber-600 font-bold"><i class="fa-solid fa-medal mr-1"></i>#3</span>';
+
+                                return `
+                                    <tr class="border-b border-gray-900/60 hover:bg-red-950/10 transition">
+                                        <td class="px-4 py-3">${rankBadge}</td>
+                                        <td class="px-4 py-3 text-white font-bold flex items-center gap-2">
+                                            <i class="fa-solid fa-user text-red-500 text-xs"></i>
+                                            @${escapeHtml(item.username)}
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-green-400 font-black">${(item.points || 0).toLocaleString()} PTS</td>
+                                        <td class="px-4 py-3 text-right text-gray-500 text-[11px]">ACTIVE</td>
+                                    </tr>
+                                `;
+                            }).join('');
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function switchTab(targetTabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            const target = document.getElementById(targetTabId);
+            if (target) target.classList.add('active');
+            
+            document.querySelectorAll('.sidebar-btn').forEach(btn => {
+                btn.classList.remove('bg-red-950/40', 'text-red-500', 'border-red-500');
+                btn.classList.add('text-gray-500', 'border-transparent');
+            });
+            const activeBtn = document.querySelector(`.sidebar-btn[data-target="${targetTabId}"]`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-gray-500', 'border-transparent');
+                activeBtn.classList.add('bg-red-950/40', 'text-red-500', 'border-red-500');
+            }
+
+            if (targetTabId === 'tab-analytics') {
+                refreshLiveStats();
+            }
+        }
+
+        function selectPersona(type) {
+            selectedPersona = type;
+            ['rude', 'friendly', 'gentle', 'custom'].forEach(b => {
+                const btn = document.getElementById(`btn-${b}`);
+                if (!btn) return;
+                if (b === type) {
+                    btn.classList.add('border-red-600', 'bg-red-950/30', 'text-white');
+                    btn.classList.remove('border-gray-800', 'bg-[#050505]', 'text-gray-500');
+                    btn.querySelector('i').classList.replace('text-gray-400', 'text-red-500');
+                } else {
+                    btn.classList.remove('border-red-600', 'bg-red-950/30', 'text-white');
+                    btn.classList.add('border-gray-800', 'bg-[#050505]', 'text-gray-500');
+                    btn.querySelector('i').classList.replace('text-red-500', 'text-gray-400');
+                }
+            });
+            updateObsUrl();
+        }
+
+        function loadTimers() {
+            const container = document.getElementById('timersContainer');
+            container.innerHTML = ''; 
+            const savedTimers = JSON.parse(localStorage.getItem('rhgx_timers') || '[]');
+            if (savedTimers.length === 0) addTimerRow();
+            else savedTimers.forEach(t => addTimerRow(t.interval, t.lines, t.text));
+        }
+
+        function addTimerRow(interval = '15', lines = '10', text = '') {
+            const container = document.getElementById('timersContainer');
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-12 gap-2 items-center timer-row';
+            row.innerHTML = `
+                <input type="number" min="1" value="${interval}" class="col-span-2 bg-[#050505] border border-gray-800 focus:border-red-600 px-3 py-2 text-sm text-white font-mono-glitch outline-none timer-interval">
+                <input type="number" min="0" value="${lines}" class="col-span-2 bg-[#050505] border border-gray-800 focus:border-red-600 px-3 py-2 text-sm text-white font-mono-glitch outline-none timer-lines">
+                <input type="text" value="${text}" placeholder="Message text..." class="col-span-7 bg-[#050505] border border-gray-800 focus:border-red-600 px-3 py-2 text-sm text-white font-mono-glitch outline-none timer-text">
+                <button onclick="this.parentElement.remove()" class="col-span-1 bg-red-900/20 border border-red-900 text-red-500 hover:bg-red-600 hover:text-white py-2 flex justify-center items-center transition"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            container.appendChild(row);
+        }
+
+        function getTimersData() {
+            return Array.from(document.querySelectorAll('.timer-row')).map(row => ({
+                interval: row.querySelector('.timer-interval').value,
+                lines: row.querySelector('.timer-lines').value,
+                text: row.querySelector('.timer-text').value
+            })).filter(t => t.text.trim() !== '');
+        }
+
+        function saveConfiguration() {
+            // Compile all settings into an object
+            const configPayload = {
+                apiKey: document.getElementById('apiKey').value.trim(),
+                aiModel: document.getElementById('aiModel').value,
+                streamerBotPort: document.getElementById('wsPort').value.trim().split(':').pop(),
+                channelName: document.getElementById('channelName').value.trim(),
+                persona: selectedPersona,
+                links: {
+                    ig: document.getElementById('linkIg').value.trim(),
+                    yt: document.getElementById('linkYt').value.trim(),
+                    twitch: document.getElementById('linkTwitch').value.trim(),
+                    kick: document.getElementById('linkKick').value.trim(),
+                    discord: document.getElementById('linkDiscord').value.trim(),
+                    web: document.getElementById('linkWeb').value.trim(),
+                    kofi: document.getElementById('linkKofi').value.trim()
+                },
+                extraKnowledge: document.getElementById('extraKnowledge').value.trim(),
+                kofiVerificationToken: document.getElementById('kofiToken').value.trim(),
+                triggerMode: document.getElementById('triggerMode').value,
+                triggerPrefix: document.getElementById('triggerPrefix').value.trim() || '!bot',
+                minPermissions: document.getElementById('minPermissions').value,
+                blacklist: document.getElementById('blacklist').value.trim(),
+                eventReactions: document.getElementById('eventReactionsToggle').checked,
+                minigamesEnabled: document.getElementById('minigamesGlobalToggle').checked,
+                actionRedemptions: document.getElementById('actionRedemptions').value.trim() || 'sus:0, wow:0, ara:0',
+                pointsPerMin: parseInt(document.getElementById('pointsPerMin').value) || 2,
+                
+                gambleMin: parseInt(document.getElementById('gambleMin').value) || 10,
+                gambleMax: parseInt(document.getElementById('gambleMax').value) || 10000,
+                gambleMul1: parseFloat(document.getElementById('gambleMul1').value) || 0,
+                gambleMul2: parseFloat(document.getElementById('gambleMul2').value) || 0,
+                gambleMul3: parseFloat(document.getElementById('gambleMul3').value) || 2,
+                gambleMul4: parseFloat(document.getElementById('gambleMul4').value) || 2,
+                gambleMul5: parseFloat(document.getElementById('gambleMul5').value) || 3,
+                
+                heistMin: parseInt(document.getElementById('heistMin').value) || 50,
+                heistMax: parseInt(document.getElementById('heistMax').value) || 5000,
+                heistChance: parseInt(document.getElementById('heistChance').value) || 40,
+                heistTime: parseInt(document.getElementById('heistTime').value) || 30
+            };
+
+            // Save to localStorage so browser preserves inputs across refreshes
+            try {
+                localStorage.setItem('rhgx_api_key', configPayload.apiKey);
+                localStorage.setItem('rhgx_ai_model', configPayload.aiModel);
+                localStorage.setItem('rhgx_ws_port', document.getElementById('wsPort').value.trim());
+                localStorage.setItem('rhgx_channel_name', configPayload.channelName);
+                localStorage.setItem('rhgx_persona', configPayload.persona);
+                localStorage.setItem('rhgx_link_ig', configPayload.links.ig);
+                localStorage.setItem('rhgx_link_yt', configPayload.links.yt);
+                localStorage.setItem('rhgx_link_twitch', configPayload.links.twitch);
+                localStorage.setItem('rhgx_link_kick', configPayload.links.kick);
+                localStorage.setItem('rhgx_link_discord', configPayload.links.discord);
+                localStorage.setItem('rhgx_link_web', configPayload.links.web);
+                localStorage.setItem('rhgx_link_kofi', configPayload.links.kofi);
+                localStorage.setItem('rhgx_kofi_token', configPayload.kofiVerificationToken);
+                localStorage.setItem('rhgx_extra_knowledge', configPayload.extraKnowledge);
+                localStorage.setItem('rhgx_trigger_mode', configPayload.triggerMode);
+                localStorage.setItem('rhgx_trigger_prefix', configPayload.triggerPrefix);
+                localStorage.setItem('rhgx_min_permissions', configPayload.minPermissions);
+                localStorage.setItem('rhgx_blacklist', configPayload.blacklist);
+                localStorage.setItem('rhgx_event_reactions', configPayload.eventReactions);
+                localStorage.setItem('rhgx_minigames_enabled', configPayload.minigamesEnabled);
+                localStorage.setItem('rhgx_action_redemptions', configPayload.actionRedemptions);
+                localStorage.setItem('rhgx_points_per_min', configPayload.pointsPerMin);
+                localStorage.setItem('rhgx_gamble_min', configPayload.gambleMin);
+                localStorage.setItem('rhgx_gamble_max', configPayload.gambleMax);
+                localStorage.setItem('rhgx_gamble_mul1', configPayload.gambleMul1);
+                localStorage.setItem('rhgx_gamble_mul2', configPayload.gambleMul2);
+                localStorage.setItem('rhgx_gamble_mul3', configPayload.gambleMul3);
+                localStorage.setItem('rhgx_gamble_mul4', configPayload.gambleMul4);
+                localStorage.setItem('rhgx_gamble_mul5', configPayload.gambleMul5);
+                localStorage.setItem('rhgx_heist_min', configPayload.heistMin);
+                localStorage.setItem('rhgx_heist_max', configPayload.heistMax);
+                localStorage.setItem('rhgx_heist_chance', configPayload.heistChance);
+                localStorage.setItem('rhgx_heist_time', configPayload.heistTime);
+            } catch (e) {
+                console.warn('LocalStorage save error:', e);
+            }
+
+            // Deployment-ready relative endpoint
+            fetch('/update-config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(configPayload)
+            }).then(() => {
+                showCyberToast("MEMORY_UPDATED: Configuration saved to disk!", "success");
+                const btn = document.querySelector('button[onclick="saveConfiguration()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> MEMORY_UPDATED';
+                btn.classList.replace('bg-red-600', 'bg-white');
+                btn.classList.replace('text-white', 'text-black');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.replace('bg-white', 'bg-red-600');
+                    btn.classList.replace('text-black', 'text-white');
+                }, 2000);
+            }).catch(err => {
+                showCyberToast("Backend offline! Ensure Node server is running.", "warning");
+            });
+
+            updateObsUrl();
+        }
+
+        function updateObsUrl() {
+            // Deployment-ready dynamic origin
+            const obsUrl = `${window.location.origin}/overlay.html`;
+            const input = document.getElementById('obsUrlInput');
+            if (input) input.value = obsUrl;
+        }
+
+        function copyObsUrl() {
+            const input = document.getElementById('obsUrlInput');
+            navigator.clipboard.writeText(input.value).then(() => {
+                showCyberToast("OBS OVERLAY URL COPIED TO CLIPBOARD", "success");
+                const btnText = document.getElementById('copyBtnText');
+                btnText.innerText = 'COPIED';
+                setTimeout(() => { btnText.innerText = 'COPY'; }, 2000);
+            });
+        }
+
+        function resetAllPoints() {
+            if (confirm("WARNING: This will permanently wipe all viewer point balances to 0 in points.json. Proceed?")) {
+                fetch('/update-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: "RESET_POINTS" })
+                }).then(() => {
+                    showCyberToast("DATABASE COMMAND SENT: All points wiped to 0", "warning");
+                    refreshLiveStats();
+                });
+            }
+        }
+    </script>
+</body>
+</html>
